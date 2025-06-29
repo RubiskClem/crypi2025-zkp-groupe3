@@ -127,9 +127,9 @@
   </header>
 
   <nav>
-    <a href="index.html">Autorité</a>
-    <a href="verify.html">Vérification</a>
-    <a href="db.html">Base de données</a>
+    <a href="src/web/index.html">Autorité</a>
+    <a href="src/web/verify.html">Vérification</a>
+    <a href="src/web/db.html">Base de données</a>
   </nav>
 
   <div class="container">
@@ -191,7 +191,11 @@
 
   <script>
     function stringToAsciiArray(str) {
-      return str.split('').map(char => char.charCodeAt(0));
+      const result = new Array(32).fill(0);
+      for (let i = 0; i < Math.min(str.length, 32); i++) {
+        result[i] = str.charCodeAt(i);
+      }
+      return result;
     }
   
     function convertDate(dateStr) {
@@ -268,8 +272,8 @@
         name: stringToAsciiArray(name),
         surname: stringToAsciiArray(surname),
         birthDate,
-        license: stringToAsciiArray(license),
-        expiration,
+        // license: stringToAsciiArray(license),
+        // expiration,
         currentDate: getCurrentDate(),
         nonce: generateNonce()
       };
@@ -301,8 +305,8 @@
               name: name,
               surname: surname,
               birthDate: birthDateRaw,
-              license: license,
-              expiration: expirationRaw,
+              // license: license,
+              // expiration: expirationRaw,
               proof: result.proof,
               publicSignals: result.publicSignals
             })

@@ -6,6 +6,9 @@ const path = require('path');
 const app = express();
 const PORT = 3000;
 
+var circuitPath = "src/circuits/";
+var file = "identity";
+
 app.use(express.json());
 app.use(express.static('.'));
 
@@ -24,19 +27,23 @@ function runCmd(cmd) {
 // Init circuit au démarrage
 async function initCircuit() {
   if (circuitReady) return;
-  
+
   try {
     console.log('Init circuit...');
-    await runCmd('mkdir -p data/build');
-    await runCmd('circom identity_verification.circom --r1cs --wasm --sym -o ../../data/build/');
-    await runCmd('snarkjs groth16 setup data/build/identity_verification.r1cs data/ptau/powersOfTau28_hez_final_18.ptau data/build/identity_verification.zkey');
-    await runCmd('snarkjs zkey export verificationkey data/build/identity_verification.zkey data/build/verification_key.json');
+    await runCmd(`mkdir -p data/${file}`);
+    await runCmd(`circom ${circuitPath}/main_${file}.circom --r1cs --wasm --sym -o data/${file}/`);
+    await runCmd(`snarkjs groth16 setup data/${file}/main_${file}.r1cs data/ptau/powersOfTau28_hez_final_18.ptau data/${file}/${file}_verification.zkey`);
+    await runCmd(`snarkjs zkey export verificationkey data/${file}/${file}_verification.zkey data/${file}/verification_key.json`);
     circuitReady = true;
     console.log('Circuit prêt !');
   } catch (e) {
     console.error('Erreur init:', e.message);
   }
-}
+};
+
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'index.html'));
+});
 
 // Route pour générer preuve
 app.post('/api/prove', async (req, res) => {
@@ -46,10 +53,12 @@ app.post('/api/prove', async (req, res) => {
     // Écrire input
     fs.writeFileSync('data/input.json', JSON.stringify(req.body));
     
+    var time = (new Date()).toISOString();
+
     // Générer witness et preuve
-    await runCmd('node data/build/identity_verification_js/generate_witness.js data/build/identity_verification_js/identity_verification.wasm data/input.json data/build/witness.wtns');
-    await runCmd('snarkjs groth16 prove data/build/identity_verification.zkey data/build/witness.wtns data/build/proof.json data/build/public.json');
-    
+    await runCmd(`node data/${file}/main_${file}_js/generate_witness.js data/${file}/main_${file}_js/main_${file}.wasm data/input.json data/${file}/witness_${time}.wtns`);
+    await runCmd(`snarkjs groth16 prove data/${file}/${file}_verification.zkey data/${file}/witness_${time}.wtns data/${file}/proof.json data/${file}/public.json`);
+    console.log('Preuve générée !aaaaa');
     res.json({ output: 'Preuve générée !' });
   } catch (e) {
     res.status(500).json({ error: e.message });
