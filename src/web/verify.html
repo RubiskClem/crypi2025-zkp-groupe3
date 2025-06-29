@@ -162,7 +162,7 @@
         const text = await witnessFile.text();
         const data = JSON.parse(text);
 
-        const response = await fetch('/api/prove', {
+        const response = await fetch('/api/generate-proof', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(data)

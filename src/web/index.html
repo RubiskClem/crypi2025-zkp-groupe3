@@ -282,7 +282,7 @@
       jsonOutput.textContent = JSON.stringify(data, null, 2);
   
       try {
-        const response = await fetch('/api/prove', {
+        const response = await fetch('/api/create-witness', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
