@@ -1,17 +1,30 @@
 pragma circom 2.2.2;
 
 include "../../node_modules/circomlib/circuits/comparators.circom";
+include "../../node_modules/circomlib/circuits/poseidon.circom";
 
-template IdentityVerification(nameLength, surnameLength, ageRequirement) {
+template IdentityVerification() {
 
-    // Private inputs
-    signal input birthDate;                         // Format yyyymmdd
+    // Inputs
+    signal input nameHash;                                  // Hash
+    signal input surnameHash;                               // Hash
+    signal input birthDate;                                 // Format yyyymmdd
+    signal input currentDate;                               // Format yyyymmdd
+    signal input nonce;                                     // Random number for commitment            
+    signal input commitmentIdentity;                        // Hash of the identity
 
-    // Public inputs
-    signal input name[nameLength];
-    signal input surname[surnameLength];
-    signal input currentDate;                       // Format yyyymmdd
-    signal input nonce;
+    // Hasher
+    component hasher = Poseidon(5);
+    hasher.inputs[0] <== nameHash;
+    hasher.inputs[1] <== surnameHash;
+    hasher.inputs[2] <== birthDate;
+    hasher.inputs[3] <== currentDate;
+    hasher.inputs[4] <== nonce;
+
+    // Verification of commitmentIdentity
+    component isEqual = IsEqual();
+    isEqual.in[0] <== hasher.out;
+    isEqual.in[1] <== commitmentIdentity;
 
     // Output
     signal output isMajor;
@@ -22,6 +35,8 @@ template IdentityVerification(nameLength, surnameLength, ageRequirement) {
     // Check if person is major
     component majorCheck = GreaterEqThan(22);
     majorCheck.in[0] <== age;
-    majorCheck.in[1] <== ageRequirement * 10000;    // Assuming date format is yyyymmdd
-    isMajor <== majorCheck.out;
+    majorCheck.in[1] <== 18 * 10000;
+    
+    // 1 if major, 0 if not, 2 if commitmentIdentity is not equal
+    isMajor <==  isEqual.out * majorCheck.out + (1 - isEqual.out) * 2;
 }

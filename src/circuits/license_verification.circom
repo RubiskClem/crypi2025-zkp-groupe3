@@ -1,31 +1,34 @@
 pragma circom 2.2.2;
 
-include "../../node_modules/circomlib/circuits/comparators.circom";
 include "./identity_verification.circom";
+include "../../node_modules/circomlib/circuits/comparators.circom";
+include "../../node_modules/circomlib/circuits/poseidon.circom";
 
-template LicenseVerification(nameLength, surnameLength, ageRequirement) {
+template LicenseVerification() {
 
-    // Private inputs
-    signal input licenseType[3];            // Example: 'A', 'D1E'
-    signal input licenseExpiration;         // Format yyyymmdd
-    signal input birthDate;                 // Format yyyymmdd
-
-    // Public inputs
-    signal input name[nameLength];
-    signal input surname[surnameLength];
-    signal input currentDate;               // Format yyyymmdd
-    signal input nonce;
+    // Inputs
+    signal input nameHash;                                  // Hash
+    signal input surnameHash;                               // Hash
+    signal input birthDate;                                 // Format yyyymmdd
+    signal input currentDate;                               // Format yyyymmdd
+    signal input licenseTypeHash;                           // Hash: 'A', 'D1E'
+    signal input licenseExpiration;                         // Format yyyymmdd
+    signal input commitmentIdentity;                        // Hash of the identity
+    signal input commitmentLicense;                         // Hash of the license
+    signal input nonce;                                     // Random number for commitment
 
     // Output
     signal output isValidLicense;
 
     // Identity verification (isMajor)
     signal isMajor;
-    component identityVerify = IdentityVerification(nameLength, surnameLength, ageRequirement);
-    identityVerify.name <== name;
-    identityVerify.surname <== surname;
+    component identityVerify = IdentityVerification();
+    identityVerify.nameHash <== nameHash;
+    identityVerify.surnameHash <== surnameHash;
     identityVerify.birthDate <== birthDate;
     identityVerify.currentDate <== currentDate;
+    identityVerify.commitmentIdentity <== commitmentIdentity;
+    identityVerify.nonce <== nonce;
     isMajor <== identityVerify.isMajor;
 
     // Check if no license
