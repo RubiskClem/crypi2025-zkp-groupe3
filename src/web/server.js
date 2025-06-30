@@ -163,11 +163,34 @@ app.post('/api/verify', async (req, res) => {
     // Vérifier avec la commande corrigée
     const result = await runCmd(`snarkjs groth16 verify data/${file}/main_${file}_verification_key.json ${publicPath} ${proofPath}`);
     const valid = result.includes('OK');
+
+    let publicData = [];
+    try {
+      publicData = JSON.parse(fs.readFileSync(publicPath, 'utf-8'));
+    } catch (err) {
+      console.error('Erreur de lecture du fichier JSON publicPath :', err);
+    }
+
+    const valeur = publicData[0];
+    let interpretation;
+    switch (valeur) {
+      case "0":
+        interpretation = "Mineur";
+        break;
+      case "1":
+        interpretation = "Majeur";
+        break;
+      case "2":
+        interpretation = "Ment sur son identité";
+        break;
+      default:
+        interpretation = "Valeur inconnue";
+    }
     
     console.log('Vérification effectuée !');
     res.json({ 
       success: true,
-      output: valid ? 'Validation OK - La preuve est valide !' : 'Validation échouée - La preuve n\'est pas valide.',
+      output: valid ? `Validation OK - La preuve est valide ! ${interpretation}` : 'Validation échouée - La preuve n\'est pas valide.',
       isValid: valid,
       verificationResult: result.trim()
     });
