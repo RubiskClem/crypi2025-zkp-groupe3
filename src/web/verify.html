@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Vérification - Zero-Knowledge</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: sans-serif;
+      background-color: #ffffff;
+      color: #222;
+    }
+
+    header {
+      background-color: #2f5d3f;
+      color: white;
+      padding: 1rem;
+      text-align: center;
+    }
+
+    nav {
+      display: flex;
+      justify-content: center;
+      gap: 1rem;
+      background-color: #4a7757;
+      padding: 0.5rem 0;
+    }
+
+    nav a {
+      color: white;
+      text-decoration: none;
+      font-weight: bold;
+    }
+
+    nav a:hover {
+      text-decoration: underline;
+    }
+
+    main {
+      padding: 2rem;
+      max-width: 700px;
+      margin: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 2rem;
+    }
+
+    .block {
+      background-color: rgba(74, 119, 87, 0.1);
+      padding: 1.5rem;
+      border-radius: 12px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    .block h2 {
+      margin-top: 0;
+      color: #2f5d3f;
+    }
+
+    .block label {
+      font-weight: bold;
+    }
+
+    .block input[type="file"],
+    .block select {
+      display: block;
+      margin-top: 0.5rem;
+      margin-bottom: 1rem;
+      padding: 0.5rem;
+      width: 100%;
+      max-width: 400px;
+    }
+
+    .block button {
+      background-color: #4a7757;
+      color: white;
+      padding: 0.6rem 1.2rem;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+
+    .block button:hover {
+      background-color: #3e654a;
+    }
+
+    .block button:disabled {
+      background-color: #ccc;
+      cursor: not-allowed;
+    }
+
+    #console {
+      margin-top: 1rem;
+      padding: 1rem;
+      border-radius: 8px;
+      background-color: #e9f1ec;
+      color: #1e3e2f;
+      font-family: monospace;
+      white-space: pre-wrap;
+    }
+
+    .error {
+      color: #d00000;
+    }
+
+    .success {
+      color: #065f46;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Zero-Knowledge Identity Verification</h1>
+  </header>
+
+  <nav>
+    <a href="index.html">Autorité</a>
+    <a href="verify.html">Vérification</a>
+    <a href="db.html">Base de données</a>
+  </nav>
+
+  <main>
+    <div class="block">
+      <h2>Génération d'une preuve</h2>
+      <label for="witness">Witness (fichier .wtns) :</label>
+    <input type="file" id="witness" accept=".wtns" />
+      <button onclick="generateProof()" id="generateBtn">Générer la preuve</button>
+    </div>
+
+    <div class="block">
+      <h2>Vérification d'une preuve</h2>
+      <input type="file" id="proofFile" />
+      <input type="file" id="publicFile" />
+      <button onclick="verifyLatestProof()" id="verifyBtn">Vérifier la dernière preuve</button>
+      <div id="console"></div>
+    </div>
+  </main>
+
+  <script>
+    function updateConsole(message, isError = false) {
+      const consoleDiv = document.getElementById('console');
+      consoleDiv.textContent = message;
+      consoleDiv.className = isError ? 'error' : 'success';
+    }
+
+    function disableButton(buttonId, disabled = true) {
+      const button = document.getElementById(buttonId);
+      button.disabled = disabled;
+      button.textContent = disabled ? 'Traitement...' : (buttonId === 'generateBtn' ? 'Générer la preuve' : 'Vérifier la dernière preuve');
+    }
+
+    async function generateProof() {
+  const witnessFile = document.getElementById('witness').files[0];
+
+  if (!witnessFile) {
+    updateConsole('Veuillez sélectionner un fichier Witness (.wtns).', true);
+    return;
+  }
+
+  try {
+    disableButton('generateBtn');
+    updateConsole('Génération de la preuve en cours...');
+
+    const formData = new FormData();
+    formData.append('witnessFile', witnessFile);
+
+    const response = await fetch('/api/generate-proof', {
+      method: 'POST',
+      body: formData,
+    });
+
+    const result = await response.json();
+
+    if (response.ok && !result.error) {
+      updateConsole('Preuve générée avec succès !');
+      // Tu peux utiliser result.proof et result.publicSignals ici si besoin
+    } else {
+      updateConsole(`Erreur lors de la génération : ${result.error || 'Erreur inconnue'}`, true);
+    }
+  } catch (e) {
+    updateConsole(`Erreur lors de la lecture ou du traitement du fichier: ${e.message}`, true);
+    console.error(e);
+  } finally {
+    disableButton('generateBtn', false);
+  }
+}
+
+  async function verifyLatestProof() {
+    const proofFile = document.getElementById('proofFile').files[0];
+    const publicFile = document.getElementById('publicFile').files[0];
+  
+    if (!proofFile || !publicFile) {
+      updateConsole('Veuillez sélectionner les deux fichiers JSON (preuve et entrée publique).', true);
+      return;
+    }
+  
+    try {
+      disableButton('verifyBtn');
+      updateConsole('Vérification de la preuve en cours...');
+  
+      // Lire les fichiers en texte
+      const [proofText, publicText] = await Promise.all([
+        proofFile.text(),
+        publicFile.text()
+      ]);
+  
+      // Parser les JSON
+      const proof = JSON.parse(proofText);
+      const publicSignals = JSON.parse(publicText);
+  
+      // Envoyer les deux au backend
+      const response = await fetch('/api/verify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ proof, publicSignals })
+      });
+  
+      const result = await response.json();
+  
+      if (response.ok && !result.error) {
+        updateConsole(result.output || 'Vérification réussie !');
+      } else {
+        updateConsole(`Erreur lors de la vérification : ${result.error || 'Erreur inconnue'}`, true);
+      }
+    } catch (e) {
+      updateConsole(`Erreur de connexion au serveur : ${e.message}`, true);
+      console.error(e);
+    } finally {
+      disableButton('verifyBtn', false);
+    }
+  }
+
+
+    // Initialisation
+    document.addEventListener('DOMContentLoaded', function() {
+      updateConsole('Prêt pour la génération et vérification de preuves.');
+    });
+  </script>
+</body>
+</html>

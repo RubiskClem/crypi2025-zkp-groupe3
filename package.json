@@ -1,0 +1,21 @@
+{
+  "name": "zkp-group3-identity-verification",
+  "version": "1.0.0",
+  "description": "Zero-Knowledge Identity Verification System",
+  "main": "server.js",
+  "scripts": {
+    "start": "node src/web/server.js",
+    "dev": "node src/web/server.js"
+  },
+  "dependencies": {
+    "child_process": "^1.0.2",
+    "circomlib": "^2.0.5",
+    "circomlibjs": "^0.1.7",
+    "crypto": "^1.0.1",
+    "express": "^5.1.0",
+    "fs": "^0.0.1-security",
+    "multer": "^2.0.1",
+    "path": "^0.12.7",
+    "snarkjs": "^0.7.5"
+  }
+}

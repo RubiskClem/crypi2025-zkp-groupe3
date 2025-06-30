@@ -1,0 +1,4 @@
+data/identity/
+data/license/
+node_modules/
+package-lock.json

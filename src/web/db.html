@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Base de données - Identités</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #ffffff;
+      color: #222;
+    }
+
+    header {
+      background-color: #2f5d3f;
+      color: white;
+      padding: 1rem;
+      text-align: center;
+    }
+
+    nav {
+      display: flex;
+      justify-content: center;
+      gap: 1rem;
+      background-color: #4a7757;
+      padding: 0.5rem 0;
+    }
+
+    nav a {
+      color: white;
+      text-decoration: none;
+      font-weight: bold;
+      font-size: 16px;
+    }
+
+    nav a:hover {
+      text-decoration: underline;
+    }
+
+    .container {
+      padding: 30px;
+      max-width: 1200px;
+      margin: 40px auto;
+      background-color: rgba(183, 228, 199, 0.2);
+      border-radius: 10px;
+      border: 1px solid #b7e4c7;
+    }
+
+    h1 {
+      text-align: center;
+      color: white;
+      margin-bottom: 30px;
+    }
+
+    h2 {
+      text-align: center;
+      color: #2d6a4f;
+    }
+
+    .refresh-btn {
+      background-color: #4a7757;
+      color: white;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      margin-bottom: 20px;
+      font-weight: bold;
+    }
+
+    .refresh-btn:hover {
+      background-color: #3e654a;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+      background-color: white;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    th, td {
+      padding: 12px;
+      border: 1px solid #e0e0e0;
+      text-align: left;
+      vertical-align: top;
+    }
+
+    th {
+      background-color: #2f5d3f;
+      color: white;
+      font-weight: bold;
+    }
+
+    tr:nth-child(even) {
+      background-color: #f8f9fa;
+    }
+
+    tr:hover {
+      background-color: #e8f5e8;
+    }
+
+    .no-data {
+      text-align: center;
+      color: #666;
+      font-style: italic;
+      padding: 40px;
+    }
+
+    .error {
+      color: #d00000;
+      font-weight: bold;
+      text-align: center;
+      padding: 20px;
+      background-color: #ffe6e6;
+      border-radius: 5px;
+      margin: 20px 0;
+    }
+
+    .loading {
+      text-align: center;
+      color: #666;
+      padding: 20px;
+    }
+
+    .proof-cell {
+      max-width: 200px;
+      word-wrap: break-word;
+      font-family: monospace;
+      font-size: 12px;
+    }
+
+    .status {
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 12px;
+      font-weight: bold;
+    }
+
+    .status-verified {
+      background-color: #d4edda;
+      color: #155724;
+    }
+
+    .status-pending {
+      background-color: #fff3cd;
+      color: #856404;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Base de données des identités</h1>
+  </header>
+
+  <nav>
+    <a href="index.html">Autorité</a>
+    <a href="verify.html">Vérification</a>
+    <a href="db.html">Base de données</a>
+  </nav>
+
+  <div class="container">
+    <h2>Base de données publique</h2>
+    <button class="refresh-btn" onclick="loadDatabase()">Actualiser</button>
+    
+    <div id="content">
+      <div class="loading">Chargement en cours...</div>
+    </div>
+  </div>
+
+  <script>
+    async function loadDatabase() {
+      const contentDiv = document.getElementById('content');
+      contentDiv.innerHTML = '<div class="loading">Chargement en cours...</div>';
+
+      try {
+        const response = await fetch('/api/database');
+        
+        if (!response.ok) {
+          throw new Error(`Erreur HTTP: ${response.status}`);
+        }
+
+        const data = await response.json();
+        displayDatabase(data);
+      } catch (error) {
+        console.error('Erreur lors du chargement de la base de données:', error);
+        contentDiv.innerHTML = `<div class="error">Erreur lors du chargement: ${error.message}</div>`;
+      }
+    }
+
+    function displayDatabase(data) {
+      const contentDiv = document.getElementById('content');
+      
+      if (!Array.isArray(data) || data.length === 0) {
+        contentDiv.innerHTML = '<div class="no-data">Aucune donnée disponible dans la base de données.</div>';
+        return;
+      }
+
+      let tableHTML = `
+        <table>
+          <thead>
+            <tr>
+              <th>Nom</th>
+              <th>Prénom</th>
+              <th>Date de naissance</th>
+              <th>Permis</th>
+              <th>Expiration</th>
+              <th>Statut</th>
+              <th>Preuve (extrait)</th>
+            </tr>
+          </thead>
+          <tbody>
+      `;
+
+      data.forEach((entry, index) => {
+        const proofExtract = entry.proof ? 
+          JSON.stringify(entry.proof).substring(0, 50) + '...' : 
+          'Non disponible';
+        
+        const status = entry.proof ? 
+          '<span class="status status-verified">Vérifié</span>' : 
+          '<span class="status status-pending">En attente</span>';
+
+        tableHTML += `
+          <tr>
+            <td>${escapeHtml(entry.name || 'N/A')}</td>
+            <td>${escapeHtml(entry.surname || 'N/A')}</td>
+            <td>${escapeHtml(entry.birthDate || 'N/A')}</td>
+            <td>${escapeHtml(entry.license || 'Aucun')}</td>
+            <td>${escapeHtml(entry.expiration || 'N/A')}</td>
+            <td>${status}</td>
+            <td class="proof-cell">${escapeHtml(proofExtract)}</td>
+          </tr>
+        `;
+      });
+
+      tableHTML += `
+          </tbody>
+        </table>
+      `;
+
+      contentDiv.innerHTML = tableHTML;
+    }
+
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    // Chargement initial
+    document.addEventListener('DOMContentLoaded', function() {
+      loadDatabase();
+    });
+
+    // Actualisation automatique toutes les 30 secondes
+    setInterval(loadDatabase, 30000);
+  </script>
+</body>
+</html>
