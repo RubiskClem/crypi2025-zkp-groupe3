@@ -8,12 +8,14 @@
     "dev": "node src/web/server.js"
   },
   "dependencies": {
-    "express": "^5.1.0",
-    "circomlib": "^2.0.5",
-    "snarkjs": "^0.7.5",
-    "crypto": "^1.0.1",
     "child_process": "^1.0.2",
+    "circomlib": "^2.0.5",
+    "circomlibjs": "^0.1.7",
+    "crypto": "^1.0.1",
+    "express": "^5.1.0",
     "fs": "^0.0.1-security",
-    "path": "^0.12.7"
+    "multer": "^2.0.1",
+    "path": "^0.12.7",
+    "snarkjs": "^0.7.5"
   }
 }

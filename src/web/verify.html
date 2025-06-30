@@ -122,8 +122,8 @@
   <main>
     <div class="block">
       <h2>Génération d'une preuve</h2>
-      <label for="witness">Witness (fichier JSON) :</label>
-      <input type="file" id="witness" accept=".json" />
+      <label for="witness">Witness (fichier .wtns) :</label>
+    <input type="file" id="witness" accept=".wtns" />
       <button onclick="generateProof()" id="generateBtn">Générer la preuve</button>
     </div>
 
@@ -164,7 +164,7 @@
 
         const response = await fetch('/api/generate-proof', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          //headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(data)
         });
 

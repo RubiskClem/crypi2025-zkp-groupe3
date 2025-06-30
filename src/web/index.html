@@ -189,15 +189,7 @@
     <pre id="jsonOutput"></pre>
   </div>
 
-  <script>
-    function stringToAsciiArray(str) {
-      const result = new Array(32).fill(0);
-      for (let i = 0; i < Math.min(str.length, 32); i++) {
-        result[i] = str.charCodeAt(i);
-      }
-      return result;
-    }
-  
+  <script> 
     function convertDate(dateStr) {
       const parts = dateStr.split('/');
       if (parts.length !== 3) return null;
@@ -269,8 +261,8 @@
       }
   
       const data = {
-        name: stringToAsciiArray(name),
-        surname: stringToAsciiArray(surname),
+        name: name,
+        surname: surname,
         birthDate,
         // license: stringToAsciiArray(license),
         // expiration,
