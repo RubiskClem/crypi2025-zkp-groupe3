@@ -154,8 +154,8 @@ app.post('/api/verify', async (req, res) => {
     var time = (new Date()).toISOString().replace(/[:.]/g, '-');
     
     // Sauvegarder les JSON fournis
-    const proofPath = `data/${file}/proof_verify_${time}.json`;
-    const publicPath = `data/${file}/public_verify_${time}.json`;
+    const proofPath = `data/${file}/proof_${time}.json`;
+    const publicPath = `data/${file}/public_${time}.json`;
     
     fs.writeFileSync(proofPath, JSON.stringify(proof, null, 2));
     fs.writeFileSync(publicPath, JSON.stringify(publicSignals, null, 2));

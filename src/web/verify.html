@@ -129,6 +129,8 @@
 
     <div class="block">
       <h2>Vérification d'une preuve</h2>
+      <input type="file" id="proofFile" />
+      <input type="file" id="publicFile" />
       <button onclick="verifyLatestProof()" id="verifyBtn">Vérifier la dernière preuve</button>
       <div id="console"></div>
     </div>
@@ -182,6 +184,51 @@
     disableButton('generateBtn', false);
   }
 }
+
+  async function verifyLatestProof() {
+    const proofFile = document.getElementById('proofFile').files[0];
+    const publicFile = document.getElementById('publicFile').files[0];
+  
+    if (!proofFile || !publicFile) {
+      updateConsole('Veuillez sélectionner les deux fichiers JSON (preuve et entrée publique).', true);
+      return;
+    }
+  
+    try {
+      disableButton('verifyBtn');
+      updateConsole('Vérification de la preuve en cours...');
+  
+      // Lire les fichiers en texte
+      const [proofText, publicText] = await Promise.all([
+        proofFile.text(),
+        publicFile.text()
+      ]);
+  
+      // Parser les JSON
+      const proof = JSON.parse(proofText);
+      const publicSignals = JSON.parse(publicText);
+  
+      // Envoyer les deux au backend
+      const response = await fetch('/api/verify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ proof, publicSignals })
+      });
+  
+      const result = await response.json();
+  
+      if (response.ok && !result.error) {
+        updateConsole(result.output || 'Vérification réussie !');
+      } else {
+        updateConsole(`Erreur lors de la vérification : ${result.error || 'Erreur inconnue'}`, true);
+      }
+    } catch (e) {
+      updateConsole(`Erreur de connexion au serveur : ${e.message}`, true);
+      console.error(e);
+    } finally {
+      disableButton('verifyBtn', false);
+    }
+  }
 
 
     // Initialisation
