@@ -148,65 +148,41 @@
     }
 
     async function generateProof() {
-      const witnessFile = document.getElementById('witness').files[0];
-      
-      if (!witnessFile) {
-        updateConsole('Veuillez sélectionner un fichier Witness (JSON).', true);
-        return;
-      }
+  const witnessFile = document.getElementById('witness').files[0];
 
-      try {
-        disableButton('generateBtn');
-        updateConsole('Génération de la preuve en cours...');
+  if (!witnessFile) {
+    updateConsole('Veuillez sélectionner un fichier Witness (.wtns).', true);
+    return;
+  }
 
-        const text = await witnessFile.text();
-        const data = JSON.parse(text);
+  try {
+    disableButton('generateBtn');
+    updateConsole('Génération de la preuve en cours...');
 
-        const response = await fetch('/api/generate-proof', {
-          method: 'POST',
-          //headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(data)
-        });
+    const formData = new FormData();
+    formData.append('witnessFile', witnessFile);
 
-        const result = await response.json();
+    const response = await fetch('/api/generate-proof', {
+      method: 'POST',
+      body: formData,
+    });
 
-        if (response.ok && !result.error) {
-          updateConsole('Preuve générée avec succès !');
-        } else {
-          updateConsole(`Erreur lors de la génération : ${result.error || 'Erreur inconnue'}`, true);
-        }
-      } catch (e) {
-        updateConsole(`Erreur lors de la lecture ou du traitement du fichier: ${e.message}`, true);
-        console.error(e);
-      } finally {
-        disableButton('generateBtn', false);
-      }
+    const result = await response.json();
+
+    if (response.ok && !result.error) {
+      updateConsole('Preuve générée avec succès !');
+      // Tu peux utiliser result.proof et result.publicSignals ici si besoin
+    } else {
+      updateConsole(`Erreur lors de la génération : ${result.error || 'Erreur inconnue'}`, true);
     }
+  } catch (e) {
+    updateConsole(`Erreur lors de la lecture ou du traitement du fichier: ${e.message}`, true);
+    console.error(e);
+  } finally {
+    disableButton('generateBtn', false);
+  }
+}
 
-    async function verifyLatestProof() {
-      try {
-        disableButton('verifyBtn');
-        updateConsole('Vérification de la preuve en cours...');
-
-        const response = await fetch('/api/verify', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' }
-        });
-
-        const result = await response.json();
-
-        if (response.ok && !result.error) {
-          updateConsole(result.output || 'Vérification réussie !');
-        } else {
-          updateConsole(`Erreur lors de la vérification : ${result.error || 'Erreur inconnue'}`, true);
-        }
-      } catch (e) {
-        updateConsole(`Erreur de connexion au serveur: ${e.message}`, true);
-        console.error(e);
-      } finally {
-        disableButton('verifyBtn', false);
-      }
-    }
 
     // Initialisation
     document.addEventListener('DOMContentLoaded', function() {
